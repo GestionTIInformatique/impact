@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="fr-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Calculez le coût réel d'un processus manuel et le rendement de son automatisation. Outil gratuit de Gestion TI Informatique.">
+<meta property="og:title" content="Calculateur IMPACT · Gestion TI Informatique">
+<meta property="og:description" content="Calculez le coût réel d'un processus manuel et le rendement de son automatisation.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://impact.gestionti.info/">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>Calculateur IMPACT · Gestion TI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: outil de travail en deux colonnes — saisie I·M·P·C·T à gauche, analyse (A) collante à droite; une colonne sur téléphone. */
+:root {
+  --bg: #f3f5f3; --surface: #ffffff; --ink: #16232b; --muted: #5a6a6f; --line: #dbe1de;
+  --accent: #0e6e66; --accent-ink: #ffffff; --accent-soft: #e1efec;
+  --good: #1d7a3e; --bad: #b3362a; --warn: #9a6400;
+  --f-display: "Archivo", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-num: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1518; --surface: #172126; --ink: #e5ecea; --muted: #94a4a7; --line: #2a373c;
+  --accent: #4cc2b2; --accent-ink: #0b1714; --accent-soft: #17312e;
+  --good: #5fcf88; --bad: #ff8b7b; --warn: #e7b54d; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f1518; --surface: #172126; --ink: #e5ecea; --muted: #94a4a7; --line: #2a373c;
+  --accent: #4cc2b2; --accent-ink: #0b1714; --accent-soft: #17312e;
+  --good: #5fcf88; --bad: #ff8b7b; --warn: #e7b54d; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--f-body); }
+.wrap { max-width: 1200px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 64px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; }
+header.top { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: end; justify-content: space-between; margin-bottom: 24px; }
+header.top h1 { font-size: clamp(26px, 4vw, 36px); font-weight: 700; letter-spacing: -0.01em; }
+header.top p { margin: 6px 0 0; color: var(--muted); max-width: 60ch; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.eyebrow { font: 600 12px/1 var(--f-body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 28px; align-items: start; }
+@media (max-width: 920px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+section.step { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.step-head { display: flex; gap: 14px; align-items: center; }
+.letter { flex: none; width: 38px; height: 38px; border-radius: 8px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font: 700 20px/1 var(--f-display); }
+.step-head h2 { font-size: 19px; font-weight: 700; }
+.step-head p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px 14px; }
+.fields .wide { grid-column: 1 / -1; }
+label.f { display: flex; flex-direction: column; gap: 5px; min-width: 0; font-size: 13px; font-weight: 600; color: var(--muted); }
+input, select, textarea { font: 400 15px/1.35 var(--f-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; width: 100%; min-width: 0; }
+input[type="number"] { font-family: var(--f-num); font-size: 14px; }
+textarea { resize: vertical; min-height: 64px; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.inline { display: flex; gap: 8px; }
+.inline > * { min-width: 0; }
+
+.rows { display: flex; flex-direction: column; gap: 10px; }
+.row { display: grid; gap: 8px; align-items: end; padding: 10px; border: 1px dashed var(--line); border-radius: 8px; }
+.row.person { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto; }
+.row.risk { grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr) minmax(0, .9fr) minmax(0, 1fr) auto; }
+@media (max-width: 640px) {
+  .row.person, .row.risk { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .row .span2 { grid-column: 1 / -1; }
+}
+.sub { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sub h3 { font: 600 15px/1.3 var(--f-body); }
+
+button { font: 600 14px/1 var(--f-body); border-radius: 6px; padding: 9px 14px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button.icon { padding: 8px 10px; color: var(--muted); }
+button.icon:hover { color: var(--bad); border-color: var(--bad); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg label { display: flex; align-items: center; padding: 8px 12px; font-size: 14px; cursor: pointer; }
+.seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.seg label:has(input:checked) { background: var(--accent); color: var(--accent-ink); }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+aside { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+@media (max-width: 920px) { aside { position: static; } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.hero-num { display: flex; flex-direction: column; gap: 4px; }
+.hero-num .v { font: 500 34px/1.1 var(--f-num); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.hero-num .v.pos { color: var(--good); } .hero-num .v.neg { color: var(--bad); }
+.kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.kpi { background: var(--surface); padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; }
+.kpi .l { font-size: 12px; color: var(--muted); }
+.kpi .v { font: 500 17px/1.2 var(--f-num); font-variant-numeric: tabular-nums; }
+.lines { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.lines div { display: flex; justify-content: space-between; gap: 12px; }
+.lines span:last-child { font-family: var(--f-num); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lines .tot { border-top: 1px solid var(--line); padding-top: 6px; font-weight: 600; }
+.pill { align-self: flex-start; font: 600 12px/1 var(--f-body); padding: 6px 10px; border-radius: 99px; border: 1px solid currentColor; }
+.pill.good { color: var(--good); } .pill.bad { color: var(--bad); } .pill.warn { color: var(--warn); }
+svg.chart { width: 100%; height: auto; display: block; }
+svg.chart text { fill: var(--muted); font: 500 10px var(--f-num); }
+svg.chart .zero { stroke: var(--ink); stroke-width: 1; opacity: .5; }
+svg.chart .grid { stroke: var(--line); stroke-width: 1; }
+svg.chart .b-neg { fill: var(--bad); opacity: .75; }
+svg.chart .b-pos { fill: var(--good); opacity: .8; }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+.internal { border-style: dashed; border-color: var(--warn); }
+.internal .eyebrow { color: var(--warn); }
+.check { display: flex; gap: 8px; align-items: center; font-size: 14px; cursor: pointer; }
+.check input { width: auto; }
+
+.story { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; max-width: 72ch; }
+.story h4 { font: 700 14px/1.3 var(--f-display); margin: 14px 0 4px; color: var(--accent); letter-spacing: .02em; text-transform: uppercase; }
+.story h4:first-child { margin-top: 0; }
+.story p { margin: 0; }
+ol.plan { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; max-width: 72ch; }
+.toast { font-size: 13px; color: var(--good); min-height: 1em; }
+@media (prefers-reduced-motion: no-preference) { button, .seg label { transition: background .15s, border-color .15s, color .15s; } }
+a { color: var(--accent); }
+.eyebrow a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--line); }
+footer.foot { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--muted); }
+footer.foot strong { color: var(--ink); }
+</style>
+
+<style>body{margin:0}</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow"><a href="https://www.gestionti.info" rel="noopener">Gestion TI Informatique</a> · Analyse de rentabilité</div>
+      <h1>Calculateur IMPACT</h1>
+      <p>Chiffrer le coût réel d'un processus manuel dans votre entreprise, le comparer à la solution proposée et produire le texte de l'analyse. Les calculs se font dans votre navigateur : aucune donnée n'est transmise.</p>
+    </div>
+    <div class="toolbar">
+      <label class="f" for="preset" style="min-width:230px">Partir d'un exemple
+        <select id="preset">
+          <option value="">— choisir —</option>
+          <optgroup label="Employés">
+            <option value="arrivee">Arrivée d'un employé</option>
+            <option value="depart">Départ d'un employé</option>
+            <option value="mdp">Réinitialisation de mot de passe</option>
+          </optgroup>
+          <optgroup label="Sécurité et entretien">
+            <option value="correctifs">Mises à jour des postes</option>
+            <option value="sauvegardes">Vérification des sauvegardes</option>
+            <option value="hameconnage">Courriels suspects et hameçonnage</option>
+          </optgroup>
+          <optgroup label="Administration">
+            <option value="toner">Consommables d'imprimante</option>
+            <option value="factures">Saisie des factures fournisseurs</option>
+          </optgroup>
+          <option value="vide">Analyse vierge (autre processus)</option>
+        </select>
+      </label>
+    </div>
+  </header>
+
+  <div class="grid">
+    <main>
+      <!-- I -->
+      <section class="step" aria-labelledby="h-i">
+        <div class="step-head"><div class="letter" aria-hidden="true">I</div><div><h2 id="h-i">Identifier le processus</h2><p>Qui fait quoi, combien de fois, et combien de temps ça prend.</p></div></div>
+        <div class="fields">
+          <label class="f" for="client">Client<input id="client" type="text"></label>
+          <label class="f" for="contact">Destinataire de l'analyse<input id="contact" type="text" placeholder="ex. la direction"></label>
+          <label class="f wide" for="processus">Processus<input id="processus" type="text"></label>
+          <label class="f wide" for="etapes">Étapes actuelles<textarea id="etapes" rows="2"></textarea></label>
+          <label class="f" for="freq">Fréquence
+            <span class="inline"><input id="freq" type="number" min="0" step="any" inputmode="decimal">
+            <select id="freqUnit" aria-label="Unité de fréquence"><option value="semaine">par semaine</option><option value="mois">par mois</option><option value="trimestre">par trimestre</option><option value="annee">par année</option></select></span>
+          </label>
+          <label class="f" for="minutes">Minutes par occurrence<input id="minutes" type="number" min="0" step="any" inputmode="decimal"></label>
+          <label class="f" for="role">Personne principale (rôle)<input id="role" type="text"></label>
+          <label class="f" for="taux">Taux horaire chargé ($/h)<input id="taux" type="number" min="0" step="any" inputmode="decimal"></label>
+        </div>
+        <div class="sub"><h3>Autres personnes impliquées</h3><button type="button" id="addPerson">+ Ajouter une personne</button></div>
+        <div class="rows" id="people"></div>
+        <p class="note">Taux chargé = salaire horaire + charges sociales et avantages (environ +30 %). Le temps perdu par un employé bloqué compte aussi.</p>
+      </section>
+
+      <!-- M -->
+      <section class="step" aria-labelledby="h-m">
+        <div class="step-head"><div class="letter" aria-hidden="true">M</div><div><h2 id="h-m">Mesurer les risques</h2><p>Ce que coûtent les erreurs et les oublis quand le processus est fait à la main.</p></div></div>
+        <div class="sub"><h3>Incidents possibles</h3><button type="button" id="addRisk">+ Ajouter un risque</button></div>
+        <div class="rows" id="risks"></div>
+        <div class="fields">
+          <label class="f" for="reduction">Réduction du risque attendue (%)<input id="reduction" type="number" min="0" max="100" step="any" inputmode="decimal"></label>
+        </div>
+        <p class="note">Restez prudent : un coût par incident défendable devant le client vaut mieux qu'un chiffre spectaculaire.</p>
+      </section>
+
+      <!-- P -->
+      <section class="step" aria-labelledby="h-p">
+        <div class="step-head"><div class="letter" aria-hidden="true">P</div><div><h2 id="h-p">Prix de la solution</h2><p>Ce que coûte la solution, une fois et chaque mois.</p></div></div>
+        <div class="fields">
+          <label class="f wide" for="solution">La solution (commencez par un verbe à l'infinitif)<textarea id="solution" rows="2"></textarea></label>
+          <label class="f" for="heuresConfig">Heures de mise en place<input id="heuresConfig" type="number" min="0" step="any" inputmode="decimal"></label>
+          <label class="f" for="tauxGTI">Taux horaire de mise en place ($/h)<input id="tauxGTI" type="number" min="0" step="any" inputmode="decimal"></label>
+          <label class="f" for="autresUniques">Autres frais uniques ($)<input id="autresUniques" type="number" min="0" step="any" inputmode="decimal"></label>
+          <label class="f" for="mensuel">Frais mensuels ($/mois)<input id="mensuel" type="number" min="0" step="any" inputmode="decimal"></label>
+          <label class="f" for="residuel">Travail manuel restant après (%)<input id="residuel" type="number" min="0" max="100" step="any" inputmode="decimal"></label>
+        </div>
+        <p class="note">Mettez 0 $ par mois si la solution est incluse au forfait Bronze, Argent ou Or.</p>
+      </section>
+
+      <!-- C -->
+      <section class="step" aria-labelledby="h-c">
+        <div class="step-head"><div class="letter" aria-hidden="true">C</div><div><h2 id="h-c">Communiquer</h2><p>Le texte à coller dans une proposition, un courriel ou une revue trimestrielle.</p></div></div>
+        <div class="sub">
+          <div class="seg" role="radiogroup" aria-label="Type de texte">
+            <label><input type="radio" name="mode" id="modeP" value="propose" checked>Projet proposé</label>
+            <label><input type="radio" name="mode" id="modeR" value="realise">Étude de cas (réalisé)</label>
+          </div>
+          <div class="toolbar"><span class="toast" id="toast" aria-live="polite"></span><button type="button" class="primary" id="copy">Copier le texte</button></div>
+        </div>
+        <div class="story" id="story"></div>
+      </section>
+
+      <!-- T -->
+      <section class="step" aria-labelledby="h-t">
+        <div class="step-head"><div class="letter" aria-hidden="true">T</div><div><h2 id="h-t">Transformer</h2><p>Le plan d'action pour passer de l'analyse au projet.</p></div></div>
+        <ol class="plan" id="plan"></ol>
+      </section>
+    </main>
+
+    <aside aria-labelledby="h-a">
+      <div class="panel">
+        <div class="step-head"><div class="letter" aria-hidden="true">A</div><div><h2 id="h-a">Analyser le rendement</h2></div></div>
+        <div class="hero-num"><span class="eyebrow">Économie nette par mois</span><span class="v" id="o-net">—</span></div>
+        <span class="pill" id="o-pill"></span>
+        <div class="kpis">
+          <div class="kpi"><span class="l">Récupération</span><span class="v" id="o-payback">—</span></div>
+          <div class="kpi"><span class="l">Heures libérées / an</span><span class="v" id="o-hours">—</span></div>
+          <div class="kpi"><span class="l">Rendement 12 mois</span><span class="v" id="o-roi12">—</span></div>
+          <div class="kpi"><span class="l">Rendement 3 ans</span><span class="v" id="o-roi36">—</span></div>
+        </div>
+        <div class="lines" id="o-lines"></div>
+        <div>
+          <div class="eyebrow" style="margin-bottom:8px">Gain cumulé sur 24 mois</div>
+          <svg class="chart" id="chart" viewBox="0 0 340 150" role="img" aria-label="Gain cumulé par mois sur 24 mois"></svg>
+        </div>
+      </div>
+
+    </aside>
+  </div>
+  <footer class="foot">
+    <div><strong>Gestion TI Informatique</strong> · Votre équipe TI, sans les tracas.</div>
+    <div>Envie de valider vos chiffres avec nous? <a href="https://www.gestionti.info" rel="noopener">gestionti.info</a> · 514-742-6455</div>
+    <div class="note">Outil d'estimation fourni à titre indicatif. Aucune donnée saisie n'est transmise ni conservée par Gestion TI : le brouillon reste dans votre navigateur.</div>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const RISK_TYPES = ["Sécurité", "Opérationnel", "Productivité", "Perte financière", "Revenu manqué", "Conformité (Loi 25)", "Satisfaction client", "Réputation", "Autre"];
+  const FREQ = { semaine: 52 / 12, mois: 1, trimestre: 1 / 3, annee: 1 / 12 };
+  const FREQ_TXT = { semaine: "par semaine", mois: "par mois", trimestre: "par trimestre", annee: "par année" };
+
+  const PRESETS = {
+    depart: {
+      client: "Exemple : concession automobile, 25 employés", contact: "la direction",
+      processus: "Départ d'un employé",
+      etapes: "Bloquer la connexion, convertir la boîte courriel en boîte partagée, retirer les licences, récupérer le poste et désactiver le compte local.",
+      freq: 1.5, freqUnit: "mois", minutes: 60, role: "Responsable administratif", taux: 38,
+      autres: [{ role: "Direction (approbation)", minutes: 15, taux: 65 }],
+      risques: [
+        { type: "Sécurité", desc: "Compte encore actif après le départ", parAn: 2, cout: 2500 },
+        { type: "Perte financière", desc: "Licences payées pour des comptes inactifs", parAn: 6, cout: 45 }
+      ],
+      reduction: 85, residuel: 15,
+      solution: "automatiser le départ à partir d'un seul billet : blocage du compte, boîte partagée, retrait des licences et confirmation écrite au gestionnaire",
+      heuresConfig: 6, tauxGTI: 150, autresUniques: 0, mensuel: 35
+    },
+    arrivee: {
+      client: "Exemple : bureau de professionnels, 15 employés", contact: "la direction",
+      processus: "Arrivée d'un employé",
+      etapes: "Créer le compte Microsoft 365, attribuer les licences et les groupes, préparer le poste, envoyer les accès et former la personne.",
+      freq: 2, freqUnit: "mois", minutes: 120, role: "Responsable administratif", taux: 38,
+      autres: [{ role: "Nouvel employé en attente de ses accès", minutes: 90, taux: 30 }],
+      risques: [{ type: "Productivité", desc: "Accès incomplets le premier jour", parAn: 8, cout: 240 }],
+      reduction: 75, residuel: 20,
+      solution: "automatiser l'arrivée à partir d'un formulaire unique : compte Microsoft 365, licences, groupes, courriel de bienvenue et poste prêt le premier jour",
+      heuresConfig: 8, tauxGTI: 150, autresUniques: 0, mensuel: 35
+    },
+    mdp: {
+      client: "Exemple : PME, 30 employés", contact: "la direction",
+      processus: "Réinitialisation de mot de passe",
+      etapes: "L'employé appelle, on vérifie son identité, on réinitialise le mot de passe et on lui transmet le nouveau.",
+      freq: 3, freqUnit: "semaine", minutes: 15, role: "Responsable administratif", taux: 38,
+      autres: [{ role: "Employé bloqué", minutes: 25, taux: 30 }],
+      risques: [{ type: "Sécurité", desc: "Mot de passe transmis par courriel ou texto", parAn: 4, cout: 500 }],
+      reduction: 70, residuel: 10,
+      solution: "activer la réinitialisation du mot de passe en libre-service, protégée par l'authentification multifacteur",
+      heuresConfig: 3, tauxGTI: 150, autresUniques: 0, mensuel: 0
+    },
+    toner: {
+      client: "Exemple : concession automobile, 14 imprimantes", contact: "le directeur du service",
+      processus: "Commande de consommables d'imprimante",
+      etapes: "Quelqu'un remarque que le toner est vide, trouve le bon numéro de pièce, appelle ou écrit pour commander, puis attend la livraison.",
+      freq: 5, freqUnit: "mois", minutes: 20, role: "Réception", taux: 30,
+      autres: [{ role: "Employé qui signale le problème", minutes: 10, taux: 32 }],
+      risques: [{ type: "Opérationnel", desc: "Imprimante arrêtée, faute de toner", parAn: 6, cout: 350 }],
+      reduction: 80, residuel: 10,
+      solution: "surveiller les niveaux de consommables et créer automatiquement le billet et la commande avant que l'imprimante tombe en panne",
+      heuresConfig: 4, tauxGTI: 150, autresUniques: 0, mensuel: 15
+    },
+    correctifs: {"client": "Exemple : PME, 25 postes", "contact": "la direction", "processus": "Mises à jour des postes", "etapes": "Vérifier chaque poste, lancer les mises à jour Windows et logiciels, redémarrer et relancer ceux qui ont échoué.", "freq": 25, "freqUnit": "mois", "minutes": 10, "role": "Responsable administratif", "taux": 38, "autres": [{"role": "Employé interrompu pendant la mise à jour", "minutes": 10, "taux": 30}], "risques": [{"type": "Sécurité", "desc": "Poste non corrigé exploité par un rançongiciel", "parAn": 0.1, "cout": 25000}], "reduction": 80, "residuel": 10, "solution": "gérer les mises à jour de tous les postes de façon centralisée et automatique, hors des heures de travail, avec un rapport mensuel", "heuresConfig": 4, "tauxGTI": 150, "autresUniques": 0, "mensuel": 50},
+    sauvegardes: {"client": "Exemple : cabinet comptable, 1 serveur", "contact": "la direction", "processus": "Vérification des sauvegardes", "etapes": "Ouvrir la console, vérifier que la sauvegarde de la nuit a réussi, relancer en cas d'échec. Les restaurations ne sont presque jamais testées.", "freq": 1, "freqUnit": "semaine", "minutes": 30, "role": "Responsable administratif", "taux": 38, "autres": [], "risques": [{"type": "Perte financière", "desc": "Sauvegarde inutilisable au moment d'une restauration", "parAn": 0.5, "cout": 8000}], "reduction": 85, "residuel": 5, "solution": "surveiller les sauvegardes en continu, être alerté de tout échec et tester une restauration chaque mois", "heuresConfig": 3, "tauxGTI": 150, "autresUniques": 0, "mensuel": 40},
+    hameconnage: {"client": "Exemple : PME, 20 employés", "contact": "la direction", "processus": "Gestion des courriels suspects", "etapes": "Un employé reçoit un courriel douteux, demande si c'est légitime, quelqu'un l'analyse et avertit les autres.", "freq": 8, "freqUnit": "mois", "minutes": 20, "role": "Responsable administratif", "taux": 38, "autres": [{"role": "Employé qui signale le courriel", "minutes": 10, "taux": 30}], "risques": [{"type": "Sécurité", "desc": "Compte compromis par hameçonnage", "parAn": 1, "cout": 5000}, {"type": "Conformité (Loi 25)", "desc": "Incident de confidentialité à déclarer", "parAn": 0.2, "cout": 3000}], "reduction": 70, "residuel": 25, "solution": "filtrer et analyser automatiquement les courriels suspects, et former les employés par des simulations d'hameçonnage", "heuresConfig": 4, "tauxGTI": 150, "autresUniques": 0, "mensuel": 45},
+    factures: {"client": "Exemple : distributeur, 40 fournisseurs", "contact": "la direction", "processus": "Saisie des factures fournisseurs", "etapes": "Ouvrir chaque facture reçue par courriel, la saisir dans le logiciel comptable, la classer et la faire approuver.", "freq": 80, "freqUnit": "mois", "minutes": 6, "role": "Commis comptable", "taux": 32, "autres": [], "risques": [{"type": "Perte financière", "desc": "Facture payée en double ou en retard", "parAn": 3, "cout": 300}], "reduction": 75, "residuel": 25, "solution": "extraire automatiquement les factures reçues par courriel et les préparer dans le logiciel comptable pour approbation", "heuresConfig": 12, "tauxGTI": 150, "autresUniques": 0, "mensuel": 60},
+    vide: {
+      client: "", contact: "", processus: "", etapes: "", freq: 0, freqUnit: "mois", minutes: 0, role: "", taux: 0,
+      autres: [], risques: [], reduction: 80, residuel: 15, solution: "", heuresConfig: 0, tauxGTI: 150, autresUniques: 0, mensuel: 0
+    }
+  };
+
+  const KEY = "gti-impact-v1";
+  const clone = o => JSON.parse(JSON.stringify(o));
+  let state;
+  try { const s = localStorage.getItem(KEY); state = s ? JSON.parse(s) : null; } catch (e) { state = null; }
+  if (!state || !state.autres) state = clone(PRESETS.depart);
+  let mode = "propose";
+
+  const $ = id => document.getElementById(id);
+  const num = v => { const n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : 0; };
+  const money = new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 });
+  const nf1 = new Intl.NumberFormat("fr-CA", { maximumFractionDigits: 1 });
+  const $f = v => money.format(Math.round(v));
+  const pct = v => v === null ? "s. o." : nf1.format(Math.round(v)) + " %";
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  const SIMPLE = ["client", "contact", "processus", "etapes", "freq", "freqUnit", "minutes", "role", "taux", "reduction", "solution", "heuresConfig", "tauxGTI", "autresUniques", "mensuel", "residuel"];
+  const NUMERIC = new Set(["freq", "minutes", "taux", "reduction", "heuresConfig", "tauxGTI", "autresUniques", "mensuel", "residuel"]);
+
+  function fillForm() {
+    SIMPLE.forEach(k => { $(k).value = state[k] ?? ""; });
+    renderRows();
+  }
+
+  function renderRows() {
+    $("people").innerHTML = state.autres.map((p, i) => `
+      <div class="row person">
+        <label class="f span2" for="p-role-${i}">Rôle<input id="p-role-${i}" data-list="autres" data-i="${i}" data-k="role" type="text" value="${esc(p.role)}"></label>
+        <label class="f" for="p-min-${i}">Minutes / occ.<input id="p-min-${i}" data-list="autres" data-i="${i}" data-k="minutes" type="number" min="0" step="any" inputmode="decimal" value="${p.minutes}"></label>
+        <label class="f" for="p-taux-${i}">Taux ($/h)<input id="p-taux-${i}" data-list="autres" data-i="${i}" data-k="taux" type="number" min="0" step="any" inputmode="decimal" value="${p.taux}"></label>
+        <button type="button" class="icon" data-del="autres" data-i="${i}" aria-label="Retirer cette personne">✕</button>
+      </div>`).join("") || `<p class="note">Aucune autre personne. Ajoutez par exemple l'employé qui attend pendant ce temps.</p>`;
+
+    $("risks").innerHTML = state.risques.map((r, i) => `
+      <div class="row risk">
+        <label class="f" for="r-type-${i}">Type<select id="r-type-${i}" data-list="risques" data-i="${i}" data-k="type">${RISK_TYPES.map(t => `<option${t === r.type ? " selected" : ""}>${t}</option>`).join("")}</select></label>
+        <label class="f" for="r-desc-${i}">Description<input id="r-desc-${i}" data-list="risques" data-i="${i}" data-k="desc" type="text" value="${esc(r.desc)}"></label>
+        <label class="f" for="r-an-${i}">Fois / an<input id="r-an-${i}" data-list="risques" data-i="${i}" data-k="parAn" type="number" min="0" step="any" inputmode="decimal" value="${r.parAn}"></label>
+        <label class="f" for="r-cout-${i}">Coût / incident ($)<input id="r-cout-${i}" data-list="risques" data-i="${i}" data-k="cout" type="number" min="0" step="any" inputmode="decimal" value="${r.cout}"></label>
+        <button type="button" class="icon" data-del="risques" data-i="${i}" aria-label="Retirer ce risque">✕</button>
+      </div>`).join("") || `<p class="note">Aucun risque chiffré. L'analyse portera seulement sur le temps.</p>`;
+  }
+
+  function calc(s) {
+    const occ = num(s.freq) * (FREQ[s.freqUnit] || 1);
+    const minTot = num(s.minutes) + s.autres.reduce((a, p) => a + num(p.minutes), 0);
+    const coutOcc = num(s.minutes) / 60 * num(s.taux) + s.autres.reduce((a, p) => a + num(p.minutes) / 60 * num(p.taux), 0);
+    const heuresMois = occ * minTot / 60;
+    const manuel = occ * coutOcc;
+    const risqueAn = s.risques.reduce((a, r) => a + num(r.parAn) * num(r.cout), 0);
+    const red = Math.min(Math.max(num(s.reduction), 0), 100) / 100;
+    const resid = Math.min(Math.max(num(s.residuel), 0), 100) / 100;
+    const risqueEvite = risqueAn / 12 * red;
+    const apres = manuel * resid;
+    const gainTemps = manuel - apres;
+    const brut = gainTemps + risqueEvite;
+    const uniques = num(s.heuresConfig) * num(s.tauxGTI) + num(s.autresUniques);
+    const mensuel = num(s.mensuel);
+    const net = brut - mensuel;
+    const payback = uniques === 0 ? (net > 0 ? 0 : Infinity) : (net > 0 ? uniques / net : Infinity);
+    const roi = m => { const cost = uniques + mensuel * m; return cost > 0 ? (brut * m - cost) / cost * 100 : null; };
+    const heuresLib = heuresMois * (1 - resid) * 12;
+    return { occ, minTot, heuresMois, manuel, risqueAn, risqueEvite, apres, gainTemps, brut, uniques, mensuel, net, payback,
+      roi12: roi(12), roi36: roi(36), an1: net * 12 - uniques, heuresLib, red, resid };
+  }
+
+  const paybackTxt = p => p === Infinity ? "jamais" : p === 0 ? "immédiate" : p < 1 ? "moins d'un mois" : nf1.format(Math.ceil(p * 10) / 10) + " mois";
+
+  function render() {
+    const r = calc(state);
+    const netEl = $("o-net");
+    netEl.textContent = $f(r.net);
+    netEl.className = "v " + (r.net > 0 ? "pos" : r.net < 0 ? "neg" : "");
+    const pill = $("o-pill");
+    if (r.net <= 0) { pill.className = "pill bad"; pill.textContent = "Rendement négatif : revoir les frais ou le périmètre"; }
+    else if (r.payback > 12) { pill.className = "pill warn"; pill.textContent = "Récupération lente : plus de 12 mois"; }
+    else { pill.className = "pill good"; pill.textContent = "Rentable en " + paybackTxt(r.payback); }
+    $("o-payback").textContent = paybackTxt(r.payback);
+    $("o-hours").textContent = nf1.format(Math.round(r.heuresLib)) + " h";
+    $("o-roi12").textContent = pct(r.roi12);
+    $("o-roi36").textContent = pct(r.roi36);
+
+    $("o-lines").innerHTML = [
+      ["Occurrences par mois", nf1.format(Math.round(r.occ * 10) / 10)],
+      ["Temps manuel par mois", nf1.format(Math.round(r.heuresMois * 10) / 10) + " h"],
+      ["Coût du temps manuel", $f(r.manuel) + "/mois"],
+      ["Coût après la solution", $f(r.apres) + "/mois"],
+      ["Risque évité", $f(r.risqueEvite) + "/mois"],
+      ["Frais mensuels GTI", "− " + $f(r.mensuel) + "/mois"],
+      ["Mise en place (unique)", $f(r.uniques)],
+      ["Bilan première année", $f(r.an1), "tot"]
+    ].map(([l, v, c]) => `<div${c ? ` class="${c}"` : ""}><span>${l}</span><span>${v}</span></div>`).join("");
+
+    drawChart(r);
+    renderStory(r);
+    renderPlan(r);
+  }
+
+  function drawChart(r) {
+    const W = 340, H = 150, L = 58, R = 6, T = 8, B = 22, N = 24;
+    const vals = Array.from({ length: N + 1 }, (_, m) => r.net * m - r.uniques);
+    let lo = Math.min(0, ...vals), hi = Math.max(0, ...vals);
+    if (hi === lo) hi = lo + 1;
+    const y = v => T + (hi - v) / (hi - lo) * (H - T - B);
+    const bw = (W - L - R) / (N + 1);
+    const short = v => { const a = Math.abs(v); const s = a >= 1000 ? nf1.format(Math.round(a / 100) / 10) + " k$" : Math.round(a) + " $"; return (v < 0 ? "−" : "") + s; };
+    let svg = `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(hi)}" y2="${y(hi)}"/><line class="grid" x1="${L}" x2="${W - R}" y1="${y(lo)}" y2="${y(lo)}"/>`;
+    vals.forEach((v, m) => {
+      const x = L + m * bw + bw * 0.15, top = Math.min(y(v), y(0)), h = Math.max(Math.abs(y(v) - y(0)), v === 0 ? 0 : 1);
+      svg += `<rect class="${v < 0 ? "b-neg" : "b-pos"}" x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${(bw * 0.7).toFixed(1)}" height="${h.toFixed(1)}"/>`;
+    });
+    svg += `<line class="zero" x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}"/>`;
+    const ticks = [hi, lo].filter(v => v !== 0);
+    ticks.forEach(v => { svg += `<text x="${L - 6}" y="${y(v) + 3}" text-anchor="end">${short(v)}</text>`; });
+    svg += `<text x="${L - 6}" y="${y(0) + 3}" text-anchor="end">0 $</text>`;
+    [0, 6, 12, 18, 24].forEach(m => { svg += `<text x="${(L + m * bw + bw / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle">${m === 0 ? "0" : m + " m"}</text>`; });
+    $("chart").innerHTML = svg;
+  }
+
+  function storyParts(r) {
+    const past = mode === "realise";
+    const s = state;
+    const client = s.client.trim() || "votre entreprise";
+    const proc = (s.processus.trim() || "ce processus");
+    const freqTxt = nf1.format(num(s.freq)) + " fois " + FREQ_TXT[s.freqUnit];
+    const autres = s.autres.filter(p => num(p.minutes) > 0 && p.role.trim());
+    const lc = t => t.charAt(0).toLowerCase() + t.slice(1);
+    const qui = [`${lc(s.role.trim() || "personne responsable")}, ${nf1.format(num(s.minutes))} minutes`]
+      .concat(autres.map(p => `${lc(p.role.trim())}, ${nf1.format(num(p.minutes))} minutes`));
+    const quiTxt = qui.join(" ; ");
+    const v = (pres, pas) => past ? pas : pres;
+
+    let p1 = `Chez ${client}, le processus « ${proc} » ${v("revient", "revenait")} environ ${freqTxt}. Chaque fois, il ${v("mobilise", "mobilisait")} : ${quiTxt}. Au total, c'${v("est", "était")} ${nf1.format(Math.round(r.heuresMois * 10) / 10)} heures et ${$f(r.manuel)} de temps de travail par mois.`;
+    const risques = s.risques.filter(x => num(x.parAn) > 0 && num(x.cout) > 0 && x.desc.trim());
+    if (risques.length) {
+      const list = risques.map(x => `${x.desc.trim().charAt(0).toLowerCase() + x.desc.trim().slice(1)} (environ ${nf1.format(num(x.parAn))} fois par année, ${$f(num(x.cout))} chaque fois)`);
+      p1 += ` Le processus ${v("comporte", "comportait")} aussi des risques : ${list.join(" ; ")}. Ces incidents ${v("représentent", "représentaient")} environ ${$f(r.risqueAn)} par année.`;
+    }
+
+    const sol = s.solution.trim() || "automatiser ce processus";
+    const mens = r.mensuel > 0 ? `, puis ${$f(r.mensuel)} par mois pour l'exploitation et la surveillance` : ", sans frais mensuels supplémentaires";
+    let p2 = past
+      ? `Gestion TI a mis en place une solution pour ${sol}. L'investissement a été de ${$f(r.uniques)} pour la mise en place${mens}. Il ne reste plus qu'environ ${nf1.format(r.resid * 100)} % du travail manuel d'origine.`
+      : `Gestion TI propose de ${sol}. La mise en place représente un investissement unique de ${$f(r.uniques)}${mens}. Il ne resterait qu'environ ${nf1.format(r.resid * 100)} % du travail manuel actuel.`;
+
+    let p3;
+    if (r.net > 0) {
+      p3 = `L'économie nette ${v("est estimée", "a été")} à ${$f(r.net)} par mois. ${r.uniques > 0 ? `L'investissement ${v("est récupéré", "a été récupéré")} en ${paybackTxt(r.payback)}` : "Il n'y a aucun investissement initial à récupérer"}, et la solution ${v("libère", "a libéré")} environ ${nf1.format(Math.round(r.heuresLib))} heures par année pour des tâches plus utiles.`;
+      if (r.roi36 !== null) p3 += ` Sur trois ans, le rendement ${v("atteint", "atteignait")} ${pct(r.roi36)}.`;
+      if (r.risqueEvite > 0) p3 += ` Une partie importante de ce gain ${v("vient", "venait")} de la réduction des risques, pas seulement du temps économisé.`;
+    } else {
+      p3 = `Sur le seul plan financier, le projet ${v("ne se rentabilise pas", "ne s'est pas rentabilisé")} (${$f(r.net)} par mois). Sa valeur ${v("repose", "reposait")} plutôt sur la réduction des risques, la sécurité et la qualité du service.`;
+    }
+
+    const dest = s.contact.trim() || "vous";
+    const p4 = past
+      ? `Nous pouvons appliquer la même démarche à d'autres processus répétitifs. Parlons-en lors de notre prochaine revue.`
+      : `Nous proposons de valider ces chiffres avec ${dest === "vous" ? "vous" : dest}, puis de planifier la mise en place. Nous mesurerons les résultats réels 90 jours après le lancement.`;
+
+    return [["Le problème", p1], [past ? "La solution mise en place" : "La solution proposée", p2], ["L'impact", p3], ["Prochaine étape", p4]];
+  }
+
+  function renderStory(r) {
+    const parts = storyParts(r);
+    const box = $("story");
+    box.replaceChildren();
+    parts.forEach(([h, t]) => {
+      const h4 = document.createElement("h4"); h4.textContent = h;
+      const p = document.createElement("p"); p.textContent = t;
+      box.append(h4, p);
+    });
+    box.dataset.plain = parts.map(([h, t]) => h + "\n" + t).join("\n\n");
+  }
+
+  function renderPlan(r) {
+    const dest = state.contact.trim() || "le client";
+    const items = [
+      `Valider avec ${dest} les fréquences, les temps et le coût des incidents. Les meilleurs chiffres sont les vôtres.`,
+      `Obtenir une soumission de mise en place (${$f(r.uniques)}${r.mensuel > 0 ? ", plus " + $f(r.mensuel) + "/mois" : ""}).`,
+      `Documenter le processus actuel avant de l'automatiser, pour avoir une base de comparaison.`,
+      `Mettre en place la solution, la tester sur un cas réel, puis la lancer.`,
+      `Mesurer les résultats réels après 90 jours et ajuster au besoin.`
+    ];
+    $("plan").innerHTML = items.map(t => `<li>${esc(t)}</li>`).join("");
+  }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  document.addEventListener("input", e => {
+    const t = e.target;
+    if (t.dataset && t.dataset.list) {
+      const k = t.dataset.k;
+      state[t.dataset.list][+t.dataset.i][k] = (k === "role" || k === "desc" || k === "type") ? t.value : num(t.value);
+    } else if (SIMPLE.includes(t.id)) {
+      state[t.id] = NUMERIC.has(t.id) ? num(t.value) : t.value;
+    } else return;
+    save(); render();
+  });
+  document.addEventListener("change", e => {
+    const t = e.target;
+    if (t.name === "mode") { mode = t.value; render(); }
+    if (t.dataset && t.dataset.list && t.tagName === "SELECT") { state[t.dataset.list][+t.dataset.i][t.dataset.k] = t.value; save(); render(); }
+    if (t.id === "freqUnit") { state.freqUnit = t.value; save(); render(); }
+  });
+  document.addEventListener("click", e => {
+    const d = e.target.closest("[data-del]");
+    if (d) { state[d.dataset.del].splice(+d.dataset.i, 1); renderRows(); save(); render(); }
+  });
+  $("addPerson").addEventListener("click", () => { state.autres.push({ role: "", minutes: 0, taux: 30 }); renderRows(); save(); render(); $("p-role-" + (state.autres.length - 1)).focus(); });
+  $("addRisk").addEventListener("click", () => { state.risques.push({ type: "Opérationnel", desc: "", parAn: 0, cout: 0 }); renderRows(); save(); render(); $("r-desc-" + (state.risques.length - 1)).focus(); });
+  $("preset").addEventListener("change", e => {
+    const p = PRESETS[e.target.value]; if (!p) return;
+    state = clone(p); fillForm(); save(); render(); e.target.value = "";
+  });
+  $("copy").addEventListener("click", () => {
+    const text = $("story").dataset.plain || "";
+    const ok = () => { $("toast").textContent = "Texte copié"; setTimeout(() => $("toast").textContent = "", 2500); };
+    const fallback = () => {
+      const range = document.createRange(); range.selectNodeContents($("story"));
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      $("toast").textContent = "Texte sélectionné : faites Ctrl+C";
+    };
+    try { navigator.clipboard.writeText(text).then(ok, fallback); } catch (err) { fallback(); }
+  });
+
+  fillForm(); render();
+})();
+</script>
+
+</body>
+</html>
